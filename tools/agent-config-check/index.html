@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+  <title>AIエージェント設定チェッカー | dev-tools-jp</title>
+  <meta name="description" content=".env・YAML・JSON・TOML・MCP・Docker Composeの危険な設定をブラウザ内で簡易チェック。キーの直書き、公開ポート、認証・権限を確認できます。入力は送信・保存しません。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="AIエージェント設定チェッカー | dev-tools-jp">
+  <meta property="og:description" content="キーの直書きや公開・認証・権限設定をブラウザ内で簡易チェック。入力は送信・保存しません。">
+  <meta property="og:url" content="https://supportapp3-lab.github.io/dev-tools-jp/tools/agent-config-check/">
+  <meta property="og:locale" content="ja_JP">
+  <link rel="stylesheet" href="style.css">
+  <script src="scanner.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header class="site-header"><a href="../../" class="brand">dev-tools-jp</a><span class="privacy"><span aria-hidden="true">●</span> ブラウザ内で処理</span></header>
+    <main>
+      <div class="intro">
+        <p class="eyebrow">設定を公開する、その前に</p>
+        <h1>AIエージェント<br class="mobile-break">設定チェッカー</h1>
+        <p class="lead">キーの直書きや、広すぎる公開・権限設定を見つけます。<br>.env / YAML / JSON / TOML / MCP / Docker Compose に対応する簡易チェックです。</p>
+      </div>
+      <div class="workspace">
+        <section class="panel input-panel" aria-labelledby="input-heading">
+          <div class="panel-heading"><h2 id="input-heading"><span class="step">01</span> 設定を入力</h2><button type="button" id="sample" class="text-button">サンプル入力</button></div>
+          <label for="config">確認したい設定を貼り付けてください</label>
+          <textarea id="config" rows="17" maxlength="200000" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="# ここに設定を貼り付け
+DEBUG=true
+HOST=0.0.0.0" aria-describedby="input-help"></textarea>
+          <p id="input-help" class="hint">最大20万文字。入力内容は送信・保存しません。</p>
+          <div class="actions"><button type="button" id="check" class="primary">設定をチェック <span aria-hidden="true">→</span></button><button type="button" id="clear" class="secondary">入力を消去</button></div>
+        </section>
+        <section class="panel result-panel" aria-labelledby="result-heading">
+          <div class="panel-heading"><h2 id="result-heading"><span class="step">02</span> 確認結果</h2><span id="count" class="count" hidden></span></div>
+          <p id="status" class="result-status" role="status" aria-live="polite">入力後に「設定をチェック」を押してください。</p>
+          <div id="empty" class="empty-state"><span class="empty-icon" aria-hidden="true">≡</span><p>気になる設定を、ここに一覧表示します。</p><p class="hint">検出した値はすべてマスクします。</p></div>
+          <ol id="findings" class="findings" aria-label="検出した設定"></ol>
+        </section>
+      </div>
+      <section class="notes" aria-labelledby="notes-heading">
+        <h2 id="notes-heading">使い方と注意点</h2>
+        <p>設定を貼り付け、チェックボタンを押すと、該当する行と見直しのヒントを表示します。「サンプル入力」で試せます。入力を編集したら、もう一度チェックしてください。</p>
+        <p>これは文字列パターンによる簡易検出です。ファイル形式の完全な解析や設定の安全性の保証は行いません。コメント・複雑な入れ子・独自形式では見逃しや誤検出があり、検出なしでも安全とは限りません。</p>
+        <p>貼り付けた入力欄には元の値が表示されます。画面共有や拡張機能にも注意し、共有前には「入力を消去」を押してください。外部送信・保存・広告・アクセス解析はありません。</p>
+      </section>
+    </main>
+    <footer><a href="../../">← ツール一覧へ</a><p>小さな確認で、設定を少し確かに。</p></footer>
+  </div>
+</body>
+</html>
