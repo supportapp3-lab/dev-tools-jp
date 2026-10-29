@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+  <title>cron式の日本語翻訳機 | dev-tools-jp</title>
+  <meta name="description" content="cron式を日本語で説明し、次の実行日時を5回分表示。ローカル時刻・UTCに対応。入力はブラウザ内で処理し、送信・保存しません。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="cron式の日本語翻訳機 | dev-tools-jp">
+  <meta property="og:description" content="このcron、いつ動く？ 日本語の説明と次の5回をブラウザ内で確認できます。">
+  <meta property="og:url" content="https://supportapp3-lab.github.io/dev-tools-jp/tools/cron-ja/">
+  <meta property="og:locale" content="ja_JP">
+  <link rel="stylesheet" href="style.css">
+  <script src="cron.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header><a class="brand" href="../../">dev-tools-jp</a><span class="privacy">● ブラウザ内で処理</span></header>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">このcron、いつ動く？</p>
+        <h1>cron式の日本語翻訳機</h1>
+        <p class="lead">記号の並びを、日本語とカレンダーに。<br>次の実行日時を5回分、手元で確認できます。</p>
+      </section>
+      <section class="panel" aria-labelledby="input-heading">
+        <h2 id="input-heading"><span class="step">01</span> cron式を入力</h2>
+        <label for="expression">分　時　日　月　曜日</label>
+        <input id="expression" type="text" value="0 9 * * 1,4" maxlength="200" spellcheck="false" autocomplete="off" autocapitalize="off" aria-describedby="input-help error">
+        <p class="hint" id="input-help">5フィールドの式、または @daily などの省略形を貼り付けてください。</p>
+        <div class="examples" aria-label="よく使う例">
+          <button type="button" data-cron="0 9 * * *">毎日9時</button>
+          <button type="button" data-cron="0 9 * * MON-FRI">平日朝</button>
+          <button type="button" data-cron="*/15 * * * *">15分ごと</button>
+          <button type="button" data-cron="0 0 1 * *">毎月1日</button>
+          <button type="button" data-cron="0 0 1 * MON">1日 または 月曜</button>
+        </div>
+        <div class="controls">
+          <div><label for="zone">式を解釈するタイムゾーン</label><select id="zone"><option value="local">ブラウザのローカル時刻</option><option value="utc">UTC（協定世界時）</option></select></div>
+          <button type="button" class="primary" id="refresh">今の時刻で再計算 <span aria-hidden="true">→</span></button>
+        </div>
+        <p class="hint" id="zone-help"></p>
+        <p id="error" class="error" role="alert" hidden></p>
+      </section>
+      <section class="panel result" aria-labelledby="result-heading" aria-live="polite">
+        <h2 id="result-heading"><span class="step">02</span> 日本語にすると</h2>
+        <p id="description" class="description"></p>
+        <p class="expanded" id="expanded"></p>
+        <h3>次に実行される日時</h3>
+        <p id="reference" class="hint"></p>
+        <ol id="runs" class="runs"></ol>
+        <p id="no-runs" class="hint" hidden></p>
+      </section>
+      <section class="notes" aria-labelledby="notes-heading">
+        <h2 id="notes-heading">使い方と注意点</h2>
+        <p>式を入力すると説明と次の5回を更新します。時刻を選び直すと、同じ式をそのタイムゾーンで解釈し直します。表示した基準日時より後の実行候補です。</p>
+        <p>対応: 5フィールド、*（すべて）、,（列挙）、-（範囲）、/（ステップ）、曜日の0・7（日曜）、MONなどの曜日名、JANなどの月名。英略称は大文字・小文字を区別しません。@hourly / @daily / @weekly / @monthly / @yearly / @reboot に対応します。@reboot は説明のみです。</p>
+        <p>日と曜日を両方指定すると OR 条件（どちらか一致）です。先頭が * の日・曜日フィールドは、*/2などのステップ付きでも他方との AND 条件として扱います。ステップは各フィールド内で繰り返します。例えば */35 分は毎時0分・35分です。</p>
+        <p>サーバーのcronはサーバー側のタイムゾーンに従います。GitHub Actionsは既定でUTCです。timezoneを指定したワークフローはその設定を確認してください。Actionsでは省略形は使えず、最短間隔は5分です。</p>
+        <p>秒フィールド、Quartz形式の6〜7フィールド、?・L・W・#、実行コマンドには対応しません。暦の400年周期の範囲で探索し、存在しない日付には候補がありません。ローカル時刻の夏時間では、存在しない時刻は飛ばし、重複する時刻はUTCオフセットを付けて2回表示します。実際のサーバーやサービスによる夏時間補正・遅延・停止は再現しません。</p>
+        <p>式の確認用ツールです。ジョブの登録・実行は行いません。外部送信・保存・広告・アクセス解析はありません。</p>
+      </section>
+    </main>
+    <footer><a href="../../">← ツール一覧へ</a><p>すべての処理はブラウザ内で完結します。</p></footer>
+  </div>
+</body>
+</html>
