@@ -107,3 +107,83 @@ test('malicious markup stays data and is absent from the returned findings', () 
   const result = analyze(`PASSWORD="${attack}"`);
   assert.ok(!JSON.stringify(result).includes(attack));
 });
+
+for (const [name, input, expected] of [
+  ['MCP filesystem root', '{"mcpServers":{"files":{"args":["-y","@modelcontextprotocol/server-filesystem","/"]}}}', 'permission'],
+  ['MCP filesystem home', 'args: ["server-filesystem", "~"]', 'permission'],
+  ['MCP filesystem multiline args', 'args: [\n  "@modelcontextprotocol/server-filesystem",\n  "/"\n]', 'permission'],
+  ['agent Read home glob', 'allow: ["Read(~/**)"]', 'permission'],
+  ['agent Write home glob', '{"permissions":{"allow":["Write(~/**)"]}}', 'permission'],
+  ['agent YAML Read home glob', 'permissions:\n  allow:\n    - "Read(~/**)"', 'permission'],
+  ['filesystem home glob', 'allowed_paths: ["~/**"]', 'permission'],
+  ['filesystem YAML home glob', 'allowed_paths:\n  - "~/**"', 'permission'],
+  ['IPv6 endpoint', 'listen: "[::]:8080"', 'bind'],
+  ['IPv6 bind address', 'BIND_ADDRESS="::"', 'bind'],
+  ['IPv6 command flag', 'args: ["--listen=[::]:8080"]', 'bind'],
+  ['IPv4 command flag', 'command: "serve --host 0.0.0.0"', 'bind'],
+  ['Docker host network', 'services:\n  agent:\n    network_mode: host', 'network']
+]) {
+  test(`detects regression: ${name}`, () => assert.ok(ids(input).has(expected)));
+}
+
+for (const [name, input] of [
+  ['description containing IPv4', 'description: "Bind to 0.0.0.0 when needed"'],
+  ['description containing IPv6', 'description: "Example endpoint [::]:8080"'],
+  ['description containing bind flag', 'description: "Use --host 0.0.0.0 for remote access"'],
+  ['plain explanatory text', 'Use 0.0.0.0 to listen on all interfaces.'],
+  ['commented binding', '# host: 0.0.0.0\n// listen: "[::]:8080"'],
+  ['IPv6 loopback host', 'host: "::1"'],
+  ['IPv6 loopback endpoint', 'listen: "[::1]:8080"'],
+  ['other MCP server args', 'args: ["server-example", "/"]'],
+  ['limited MCP filesystem', 'args: ["@modelcontextprotocol/server-filesystem", "./workspace"]'],
+  ['separate MCP server arguments', '{"files":{"args":["server-filesystem","./workspace"]},"other":{"args":["other-server","/"]}}'],
+  ['commented MCP filesystem', '# args: ["server-filesystem", "/"]'],
+  ['limited Read glob', 'allow: ["Read(~/project/**)"]'],
+  ['denied home glob', 'permissions:\n  deny: ["Read(~/**)"]'],
+  ['Docker bridge network', 'network_mode: bridge'],
+  ['certificate PEM body', `certificate: |\n  -----BEGIN CERTIFICATE-----\n  ${random}Ab3D\n  -----END CERTIFICATE-----`],
+  ['public key PEM body', `-----BEGIN PUBLIC KEY-----\n${random}Ab3D\n-----END PUBLIC KEY-----`],
+  ['base64 certificate field', `certificate: "${random}Ab3D"`]
+]) {
+  test(`does not flag regression: ${name}`, () => assert.equal(analyze(input).findings.length, 0));
+}
+
+test('CORS allow_origins produces only a CORS warning', () => {
+  for (const input of ['cors:\n  allow_origins: "*"', 'cors:\n  allow_origins:\n    - "*"', '{"cors":{"allow_origins":"*"}}']) {
+    assert.deepEqual([...ids(input)], ['cors']);
+  }
+  assert.ok(ids('allow: ["*"]').has('permission'));
+});
+
+test('PEM end restores entropy detection and does not hide private key headers', () => {
+  assert.ok(ids(`-----BEGIN CERTIFICATE-----\n${random}\n-----END CERTIFICATE-----\nCUSTOM_ID=${random}`).has('entropy'));
+  assert.ok(ids(`-----BEGIN PRIVATE KEY-----\n${random}\n-----END PRIVATE KEY-----`).has('secret'));
+  assert.ok(ids(`TOKEN=${random}`).has('secret'));
+});
+
+test('binding, flags, and filesystem argument masks use actual value lengths', () => {
+  for (const [input, ruleId, value] of [
+    ['host: "::"', 'bind', '::'],
+    ['listen: "[::]:8080"', 'bind', '[::]:8080'],
+    ['HOST=0.0.0.0', 'bind', '0.0.0.0'],
+    ['args: ["--bind=[::]:8080"]', 'bind', '[::]:8080'],
+    ['args: ["--debug"]', 'debug', '--debug'],
+    ['args: ["--no-auth=true"]', 'auth', '--no-auth=true'],
+    ['args: ["--yolo"]', 'permission', '--yolo'],
+    ['args: ["server-filesystem", "/"]', 'permission', '/']
+  ]) {
+    const result = analyze(input);
+    assert.equal(result.findings.find(item => item.ruleId === ruleId).maskedValue, `••••（${value.length}文字）`);
+    assert.ok(!JSON.stringify(result).includes('args:'));
+  }
+});
+
+test('bare port masks use the configured port length', () => {
+  for (const input of ['ports:\n - 8080', 'ports: [8080]', 'published: "8080"']) {
+    assert.equal(analyze(input).findings.find(item => item.ruleId === 'port').maskedValue, '••••（4文字）');
+  }
+});
+
+test('MCP filesystem finding reports the root argument line', () => {
+  assert.deepEqual(analyze('args: [\n "server-filesystem",\n "/"\n]').findings.map(item => [item.ruleId, item.line]), [['permission', 3]]);
+});
