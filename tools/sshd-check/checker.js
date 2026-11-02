@@ -28,10 +28,13 @@
     for (let index = 0; index < lines.length; index++) {
       const withoutComment = lines[index].split('#', 1)[0].trim();
       if (!withoutComment) continue;
-      const parts = withoutComment.match(/\S+/g) || [];
-      if (!parts.length) continue;
-      const keyword = parts[0];
-      const value = parts.slice(1).join(' ');
+      const directive = /^([^\s=]+)(?:\s*=\s*(.*)|\s+(.*))?$/.exec(withoutComment);
+      if (!directive) continue;
+      const keyword = directive[1];
+      let value = directive[2] || directive[3] || '';
+      if (value.length >= 2 && value[0] === '"' && value[value.length - 1] === '"') {
+        value = value.slice(1, -1);
+      }
       const lower = keyword.toLowerCase();
       const line = index + 1;
 
@@ -81,10 +84,15 @@
       add('危険', 'root の直接ログインが許可されています', rootLogin,
         '侵害時に管理者アカウントへ直接ログインされる範囲が広がります。',
         '例: PermitRootLogin prohibit-password または PermitRootLogin no。');
-    } else if (['no', 'prohibit-password'].includes(rootLogin.value.toLowerCase())) {
+    } else if (['no', 'prohibit-password', 'without-password'].includes(rootLogin.value.toLowerCase())) {
+      const legacy = rootLogin.value.toLowerCase() === 'without-password';
       add('良い', 'root の直接ログインが制限されています', rootLogin,
-        'rootへのパスワードログインを許可しない設定です。',
-        '現在の運用に合う値を維持し、別の管理者アカウントからのログインも確認してください。');
+        legacy
+          ? 'rootへのパスワードログインを許可しない設定です。without-password は prohibit-password の旧名です。'
+          : 'rootへのパスワードログインを許可しない設定です。',
+        legacy
+          ? '新しい設定例: PermitRootLogin prohibit-password。'
+          : '現在の運用に合う値を維持し、別の管理者アカウントからのログインも確認してください。');
     }
 
     const password = get('PasswordAuthentication');

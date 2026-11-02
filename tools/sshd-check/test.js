@@ -23,7 +23,7 @@ test('keywords and yes values ignore case and comments are removed', () => {
 });
 
 test('first duplicate value is used and later duplicate is explained', () => {
-  const result = analyze('PasswordAuthentication no\nPasswordAuthentication yes');
+  const result = analyze('PasswordAuthentication=no\nPasswordAuthentication = yes');
   assert(has(result, '無効', '良い'));
   assert.equal(has(result, 'パスワード認証が許可', '危険'), undefined);
   assert(has(result, '重複', '注意'));
@@ -37,8 +37,22 @@ test('legacy challenge response name shares first-value semantics', () => {
   assert.equal(has(result, 'キーボード対話認証'), undefined);
 });
 
+test('Keyword=value, spaces around equals, and quoted values are parsed', () => {
+  const result = analyze('PasswordAuthentication=yes\nPermitRootLogin = yes\nPermitEmptyPasswords = "yes"');
+  assert(has(result, 'パスワード認証が許可', '危険'));
+  assert(has(result, 'root の直接ログインが許可', '危険'));
+  assert(has(result, '空パスワード', '危険'));
+  assert.equal(has(result, 'PasswordAuthentication が未指定'), undefined);
+});
+
+test('without-password is good and identified as a legacy name', () => {
+  const finding = has(analyze('PermitRootLogin without-password'), 'root の直接ログインが制限', '良い');
+  assert.match(finding.reason, /旧名/);
+  assert.match(finding.recommendation, /prohibit-password/);
+});
+
 test('Match block is listed separately and does not affect global judgment', () => {
-  const result = analyze('PasswordAuthentication no\nMatch User guest\n PasswordAuthentication yes\n PermitRootLogin yes');
+  const result = analyze('PasswordAuthentication no\nMatch User guest\n PasswordAuthentication=yes\n PermitRootLogin=yes');
   assert(has(result, 'パスワード認証が無効', '良い'));
   assert.equal(has(result, 'パスワード認証が許可', '危険'), undefined);
   assert.equal(has(result, 'root の直接ログインが許可'), undefined);
