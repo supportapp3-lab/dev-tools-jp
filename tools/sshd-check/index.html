@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+  <title>sshd_config安全チェッカー | dev-tools-jp</title>
+  <meta name="description" content="sshd_configの認証・転送・暗号設定をブラウザ内で確認。Include先は読み込まず、入力は送信・保存しません。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="sshd_config安全チェッカー | dev-tools-jp">
+  <meta property="og:description" content="SSHサーバー設定の気になる項目を日本語で確認。貼り付けた内容はブラウザ内だけで処理します。">
+  <meta property="og:url" content="https://supportapp3-lab.github.io/dev-tools-jp/tools/sshd-check/">
+  <meta property="og:locale" content="ja_JP">
+  <link rel="stylesheet" href="style.css">
+  <script src="checker.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header><a class="brand" href="../../">dev-tools-jp</a><span class="privacy"><span aria-hidden="true">●</span> ブラウザ内で処理</span></header>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">SSHサーバー設定を、接続を切る前に確認</p>
+        <h1>sshd_config安全チェッカー</h1>
+        <p class="lead">設定ファイルを貼り付けると、認証・転送・暗号の気になる項目を日本語で表示します。<br>入力内容は送信・保存されず、このページ内で処理します。</p>
+      </section>
+      <div class="workspace">
+        <section class="panel input-panel" aria-labelledby="input-heading">
+          <div class="panel-heading"><h2 id="input-heading"><span class="step">01</span> sshd_config を入力</h2><button type="button" id="clear" class="text-button">入力を消去</button></div>
+          <label for="config">確認したい設定を貼り付けてください</label>
+          <textarea id="config" rows="15" maxlength="1048576" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="PermitRootLogin prohibit-password&#10;PasswordAuthentication no"></textarea>
+          <p class="hint">最大1MB。コメント（#以降）は解析対象外です。Include先のファイルは読み込みません。</p>
+          <div class="actions">
+            <button type="button" id="check" class="primary">設定をチェック <span aria-hidden="true">→</span></button>
+            <button type="button" id="unsafe-sample" class="secondary">危ない例</button>
+            <button type="button" id="safe-sample" class="secondary">安全な例</button>
+          </div>
+        </section>
+        <section class="panel result-panel" aria-labelledby="result-heading" aria-live="polite">
+          <div class="panel-heading"><h2 id="result-heading"><span class="step">02</span> 確認結果</h2><span id="count" class="count" hidden></span></div>
+          <p id="status" class="result-status" role="status">入力後に「設定をチェック」を押してください。</p>
+          <div id="empty" class="empty-state"><span class="empty-icon" aria-hidden="true">≡</span><p>貼り付けた設定の指摘をここに表示します。</p><p class="hint">Matchブロックは別に表示し、グローバル設定の判定には使いません。</p></div>
+          <ol id="findings" class="findings" aria-label="設定の指摘"></ol>
+          <section id="include-section" class="secondary-results" hidden aria-labelledby="include-heading">
+            <h3 id="include-heading">Include（内容は未確認）</h3><ul id="includes"></ul>
+          </section>
+          <section id="match-section" class="secondary-results" hidden aria-labelledby="match-heading">
+            <h3 id="match-heading">Match ブロック内（グローバル判定から除外）</h3><ul id="match-lines"></ul>
+          </section>
+        </section>
+      </div>
+      <section class="notes" aria-labelledby="notes-heading">
+        <h2 id="notes-heading">使い方と注意点</h2>
+        <p>設定全体を貼り付けて「設定をチェック」を押します。大文字・小文字は区別せず、#以降はコメントとして扱います。同じキーワードが複数ある場合は最初のグローバル設定を判定に使い、重複を表示します。</p>
+        <p>Matchブロック内の行はグローバル設定に混ぜず、別欄に表示します。Include先の設定は取得しません。実効値は接続元・ユーザー・OpenSSHのバージョン・Include先などで変わるため、ここでの結果は簡易確認です。</p>
+        <p>OpenSSHの既定値はバージョンによって異なります。PermitRootLoginやPasswordAuthenticationが未指定でも、実際の安全性を断定できません。Port 22は情報表示で、ポート番号の変更だけではセキュリティの本質的な対策になりません。</p>
+        <p>設定を変更した後は <code>sudo sshd -t</code> で文法を確認してください。現在のSSH接続を切らずに、別ターミナルからログインできることを確かめてください。</p>
+        <p>外部送信・保存・ログイン・広告・外部スクリプトはありません。結果は設定全体の安全性を保証するものではありません。</p>
+      </section>
+    </main>
+    <footer><a href="../../">← ツール一覧へ</a><p>すべての処理はお使いのブラウザ内で完結します。</p></footer>
+  </div>
+</body>
+</html>
