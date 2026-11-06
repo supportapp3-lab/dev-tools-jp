@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+  <title>文字数・トークン数カウンター | dev-tools-jp</title>
+  <meta name="description" content="文字数、行数、UTF-8バイト数を数え、GPT系・Claude系のトークン数を概算。入力は送信せずブラウザ内で処理します。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="文字数・トークン数カウンター | dev-tools-jp">
+  <meta property="og:description" content="文字数やトークン数をブラウザ内で概算。入力内容は外部に送信しません。">
+  <meta property="og:url" content="https://supportapp3-lab.github.io/dev-tools-jp/tools/token-count/">
+  <meta property="og:locale" content="ja_JP">
+  <link rel="stylesheet" href="style.css">
+  <script src="counter.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header><a class="brand" href="../../">dev-tools-jp</a><span class="privacy">入力はブラウザ内で処理</span></header>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">貼り付けるだけで、すぐに確認</p>
+        <h1>文字数・トークン数カウンター</h1>
+        <p class="lead">テキストを入力すると文字数やUTF-8バイト数を数え、トークン数を概算します。入力内容が外部へ送信されることはありません。</p>
+      </section>
+      <div class="workspace">
+        <section class="panel input-panel" aria-labelledby="input-heading">
+          <div class="panel-heading"><h2 id="input-heading">テキストを入力</h2><button type="button" id="clear" class="text-button">消去</button></div>
+          <label for="text-input">数えたい文章やログを貼り付けてください</label>
+          <textarea id="text-input" rows="14" maxlength="1048576" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ここにテキストを入力または貼り付け"></textarea>
+          <p class="hint">最大1MB。入力内容は送信・保存されず、このページ内だけで処理されます。</p>
+          <div class="examples" id="examples" aria-label="入力例">
+            <span>入力例:</span>
+            <button type="button" data-example="japanese">短い日本語</button>
+            <button type="button" data-example="english">English</button>
+            <button type="button" data-example="mixed">日本語＋English</button>
+            <button type="button" data-example="log">長めのログ</button>
+          </div>
+        </section>
+        <section class="panel result-panel" aria-labelledby="result-heading" aria-live="polite">
+          <div class="panel-heading"><h2 id="result-heading">集計結果</h2><span class="live">入力に合わせて更新</span></div>
+          <p id="status" class="result-status" role="status"></p>
+          <dl class="metrics">
+            <div><dt>文字数（空白・改行を含む）</dt><dd id="characters">0</dd></div>
+            <div><dt>文字数（空白・改行を除く）</dt><dd id="non-whitespace">0</dd></div>
+            <div><dt>行数</dt><dd id="lines">0</dd></div>
+            <div><dt>UTF-8バイト数</dt><dd id="bytes">0</dd></div>
+            <div><dt>空白区切りの語数 <span id="word-note" class="hint-inline"></span></dt><dd id="words">0</dd></div>
+          </dl>
+          <div class="token-estimates">
+            <div><span>GPT系トークン概算</span><strong>約<span id="gpt-tokens">0</span></strong></div>
+            <div><span>Claude系トークン概算</span><strong>約<span id="claude-tokens">0</span></strong></div>
+          </div>
+          <p class="caution">トークン数は文字種別による目安です。実際のモデル用トークナイザーの結果ではなく、モデル・バージョン・文章によって差があります。正確な値や料金は保証しません。</p>
+          <div class="copy-area"><button type="button" id="copy" class="primary">集計結果をコピー</button><span id="copy-status" role="status" aria-live="polite"></span><label class="summary-label" for="summary">コピー用の集計結果</label><textarea id="summary" rows="7" readonly></textarea></div>
+        </section>
+      </div>
+      <section class="notes" aria-labelledby="notes-heading">
+        <h2 id="notes-heading">使い方と注意点</h2>
+        <p>テキストを貼り付けるか入力例を選ぶと、約100ミリ秒後に集計が更新されます。空白区切りの語数は、空白を使わない日本語などでは参考値です。</p>
+        <p>トークン数は概算です。英数字などはGPT系を約4文字で1トークン、Claude系を約3.5文字で1トークンとして計算します。漢字・かななどのCJK文字はGPT系を約1文字あたり1トークン、Claude系を約1文字あたり1.3トークンとして計算します。これは一般的な目安で、実際のモデル用トークナイザーではありません。モデルや文章によって結果は変わるため、正確なトークン数・料金の見積もりには使えません。</p>
+        <p>このツールは入力内容を外部に送信せず、保存・ログインもしません。解析はブラウザ内で完結します。機密情報の取り扱いは、お使いの端末やブラウザの設定にも注意してください。</p>
+      </section>
+    </main>
+    <footer><a href="../../">← ツール一覧へ</a><p>入力はブラウザ内で処理します。</p></footer>
+  </div>
+</body>
+</html>
