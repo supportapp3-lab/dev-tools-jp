@@ -142,6 +142,11 @@ services:
     const v = scalar(raw);
     return v !== '' && !/^(?:null|~)$/i.test(v) && !reference(v);
   }
+  function secretFilePath(name, raw) {
+    // Only exempt file-valued *_FILE variables, not ordinary literal secrets.
+    return /_FILE$/i.test(name)
+      && /^(?:\/|\.{1,2}[\\/]|[A-Za-z]:[\\/]|\\\\|[^:\/\\\s]+[\\/])/.test(scalar(raw));
+  }
   function dbTarget(value) {
     if (/^\d+$/.test(value)) return DB_PORTS.has(Number(value));
     const range = /^(\d+)-(\d+)$/.exec(value);
@@ -206,7 +211,7 @@ services:
           const assignment = variable.key === null ? /^([^=]+)=(.*)$/.exec(scalar(variable.raw)) : null;
           const name = variable.key || assignment?.[1];
           const raw = variable.key ? variable.raw : assignment?.[2];
-          if (name && secretName(name) && raw !== undefined && literalSecret(raw)) add('secret', variable);
+          if (name && secretName(name) && raw !== undefined && literalSecret(raw) && !secretFilePath(name, raw)) add('secret', variable);
         }
         if (['extends', 'include', 'env_file'].includes(node.key)) incomplete = true;
       }

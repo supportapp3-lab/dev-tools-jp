@@ -27,6 +27,17 @@ for (const [name, input, expected] of [
   ['secret list', 'environment:\n  - API_KEY=DUMMY_VALUE\n  - PASSWORD=DUMMY_TWO', ['secret', 'secret']],
   ['secret flow map', 'environment: {API_KEY: "DUMMY_VALUE"}', ['secret']],
   ['secret flow list', 'environment: ["API_KEY=DUMMY_VALUE"]', ['secret']],
+  ['secret file absolute map', 'environment:\n  POSTGRES_PASSWORD_FILE: /run/secrets/db', []],
+  ['secret file absolute list', 'environment:\n  - MYSQL_ROOT_PASSWORD_FILE=/run/secrets/x', []],
+  ['secret file flow map', 'environment: {POSTGRES_PASSWORD_FILE: "/run/secrets/db"}', []],
+  ['secret file flow list', 'environment: ["MYSQL_ROOT_PASSWORD_FILE=/run/secrets/x"]', []],
+  ['secret file quoted list assignment', "environment:\n  - 'POSTGRES_PASSWORD_FILE=/run/secrets/db'", []],
+  ['secret file relative path', 'environment:\n  TOKEN_FILE: ./secrets/token\n  API_KEY_FILE: ../secrets/key\n  PASSWORD_FILE: secrets/password', []],
+  ['secret file Windows path', 'environment:\n  PASSWORD_FILE: C:\\secrets\\password', []],
+  ['secret file name alone does not exempt a literal', 'environment:\n  POSTGRES_PASSWORD_FILE: hunter2', ['secret']],
+  ['secret file name alone does not exempt a URL', 'environment:\n  TOKEN_FILE: https://example.invalid/token', ['secret']],
+  ['ordinary password still detected beside file reference', 'environment:\n  POSTGRES_PASSWORD_FILE: /run/secrets/db\n  POSTGRES_PASSWORD: hunter2', ['secret']],
+  ['ordinary secret containing a path remains detected', 'environment:\n  API_KEY: /run/secrets/key', ['secret']],
   ['empty/reference environment', 'environment:\n  - PASSWORD\n  - PASSWORD=\n  - API_KEY=${API_KEY}\n  - TOKEN=$TOKEN\n  - MODE=production\n  - PASSWORD=null', []],
   ['empty/null map environment', 'environment:\n  PASSWORD: ""\n  TOKEN:\n  API_KEY: null', []],
   ['latest image', 'image: registry.invalid/team/app:latest', ['latest']],
@@ -47,12 +58,18 @@ for (const [name, input, expected] of [
 for (const port of [3306, 5432, 6379, 27017, 9200]) {
   test(`DB port ${port} with omitted IP`, () => assert.deepEqual(ids(`ports:\n  - "${port}:${port}"`), ['db']));
   test(`DB port ${port} localhost`, () => assert.deepEqual(ids(`ports:\n  - "127.0.0.1:${port}:${port}"`), []));
+  test(`DB port ${port} container-only quoted block`, () => assert.deepEqual(ids(`ports:\n  - "${port}"`), ['db']));
+  test(`DB port ${port} container-only flow`, () => assert.deepEqual(ids(`ports: ["${port}"]`), ['db']));
 }
 for (const [name, input, expected] of [
   ['all IPv4', 'ports: ["0.0.0.0:12345:5432/tcp"]', ['db']],
   ['all IPv6', 'ports:\n  - "[::]:12345:5432"', ['db']],
   ['IPv6 loopback', 'ports:\n  - "[::1]:12345:5432"', []],
   ['container only ephemeral published port', 'ports:\n  - 5432', ['db']],
+  ['container only with protocol', 'ports: ["9200/tcp"]', ['db']],
+  ['container only nonDB quoted block', 'ports:\n  - "8080"', []],
+  ['container only nonDB flow', 'ports: ["8080"]', []],
+  ['container only DB range', 'ports: ["5430-5440"]', ['db']],
   ['container target is DB even with changed host port', 'ports:\n  - "15432:5432"', ['db']],
   ['host DB number with nonDB container', 'ports:\n  - "5432:8080"', []],
   ['port range', 'ports:\n  - "5300-5500:5300-5500"', ['db']],
@@ -69,6 +86,10 @@ test('dangerous sample detects all nine categories and safe sample has zero', ()
   assert.deepEqual([...new Set(api.analyze(api.unsafeSample).findings.map((f) => f.id))].sort(),
     ['privileged', 'socket', 'host', 'db', 'capability', 'secret', 'latest', 'root', 'seccomp'].sort());
   assert.deepEqual(api.analyze(api.safeSample), { findings: [], incomplete: false, truncated: false });
+});
+test('secrets-file safe configuration has no findings', () => {
+  const input = 'services:\n  db:\n    image: postgres:17.6\n    ports: ["127.0.0.1:5432:5432"]\n    environment:\n      POSTGRES_PASSWORD_FILE: /run/secrets/db\n';
+  assert.deepEqual(api.analyze(input), { findings: [], incomplete: false, truncated: false });
 });
 test('separate services do not leak section context', () => {
   const result = api.analyze('services:\n  one:\n    environment:\n      PASSWORD: DUMMY\n  two:\n    labels:\n      TOKEN: DUMMY\n    ports:\n      - "127.0.0.1:5432:5432"\n');
