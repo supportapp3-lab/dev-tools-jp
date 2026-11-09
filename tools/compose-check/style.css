@@ -1,0 +1,57 @@
+:root { color-scheme: light; font-family: system-ui, -apple-system, "Hiragino Sans", "Yu Gothic", sans-serif; color: #213b34; background: #f5f8f6; }
+* { box-sizing: border-box; }
+body { margin: 0; line-height: 1.8; }
+.page { max-width: 1080px; padding: 0 32px; margin: auto; }
+header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 25px 0; border-bottom: 1px solid #dbe5df; }
+a { color: #17624e; text-underline-offset: 4px; }
+.brand { font-size: 19px; font-weight: 750; text-decoration: none; letter-spacing: -.5px; }
+.privacy { font-size: 12px; color: #4d7565; }
+.intro { padding: 43px 0 28px; }
+.eyebrow { color: #4f7969; font-size: 12px; letter-spacing: .12em; margin: 0 0 8px; font-weight: 700; }
+h1 { font-size: clamp(25px, 4.5vw, 38px); line-height: 1.5; letter-spacing: -.03em; margin: 0 0 12px; }
+.lead { color: #61746b; margin: 0; }
+.workspace { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.panel { border: 1px solid #dbe5df; border-radius: 16px; padding: 25px; background: white; min-width: 0; }
+.panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 15px; }
+h2 { font-size: 17px; margin: 0; font-weight: 700; }
+.step { font-size: 11px; color: #749588; margin-right: 12px; letter-spacing: .08em; }
+label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+textarea, button { font: inherit; max-width: 100%; }
+textarea { display: block; width: 100%; min-width: 0; min-height: 340px; resize: vertical; border: 1px solid #b6cbbf; border-radius: 8px; background: #f8fbf9; padding: 13px 15px; font: 13px/1.7 ui-monospace, "Cascadia Code", monospace; color: #163f30; }
+textarea:focus-visible, button:focus-visible { outline: 3px solid #65b992; outline-offset: 3px; }
+button { cursor: pointer; border: 1px solid #d1dfd6; border-radius: 7px; background: white; color: #335f4d; padding: 7px 12px; }
+button:hover { background: #edf5f0; border-color: #8aaf9c; }
+.text-button { font-size: 12px; white-space: nowrap; flex-shrink: 0; }
+.hint { color: #65796d; font-size: 12px; margin: 9px 0; overflow-wrap: anywhere; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
+.primary { background: #21664b; border-color: #21664b; color: white; font-weight: 650; }
+.primary:hover { background: #164e38; color: white; }
+.secondary { font-size: 12px; }
+.result-status { color: #52665a; font-size: 13px; margin: 0 0 14px; }
+.count { color: #4d7565; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.empty-state { border: 1px dashed #cbd9d0; border-radius: 12px; padding: 24px 18px; text-align: center; color: #718378; }
+.empty-state p { margin: 5px 0; }
+.empty-icon { font-size: 28px; }
+.findings { list-style: none; padding: 0; margin: 0; display: grid; gap: 10px; }
+.finding { border: 1px solid #dbe5df; border-left-width: 5px; border-radius: 9px; padding: 12px 14px; overflow-wrap: anywhere; }
+.finding-危険 { border-left-color: #c84b48; background: #fff8f7; }
+.finding-注意 { border-left-color: #d99828; background: #fffdf7; }
+.finding-良い { border-left-color: #3a8a63; background: #f7fcf8; }
+.finding-情報 { border-left-color: #5b83a6; background: #f7faff; }
+.finding-header { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; }
+.finding-header h3 { font-size: 14px; margin: 0; flex: 1; }
+.badge { font-size: 10px; font-weight: 750; padding: 1px 7px; border-radius: 99px; background: #e8efea; }
+.line-number { color: #718378; font-size: 11px; }
+.finding p { font-size: 12px; margin: 7px 0 0; }
+.finding .recommendation { color: #315b49; font-weight: 600; }
+.secondary-results { margin-top: 17px; border-top: 1px solid #e6ede8; padding-top: 12px; }
+.secondary-results h3 { font-size: 13px; margin: 0 0 7px; }
+.secondary-results ul { padding-left: 20px; margin: 0; color: #52665a; font-size: 12px; overflow-wrap: anywhere; }
+.notes { margin: 35px 2px; color: #52665a; }
+.notes h2 { color: #294c3b; margin-bottom: 12px; }
+.notes p { font-size: 13px; margin: 10px 0; }
+code { font-family: ui-monospace, monospace; background: #edf3ef; padding: 1px 4px; border-radius: 4px; }
+footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; border-top: 1px solid #dbe5df; padding: 23px 0 32px; font-size: 12px; color: #728477; }
+[hidden] { display: none !important; }
+@media (max-width: 760px) { .page { padding: 0 18px; } .workspace { grid-template-columns: 1fr; } .panel { padding: 21px 18px; border-radius: 12px; } textarea { min-height: 260px; } }
+@media (max-width: 480px) { header { padding: 20px 0; } .privacy { font-size: 10px; } .intro { padding: 30px 0 22px; } footer { display: block; } }
