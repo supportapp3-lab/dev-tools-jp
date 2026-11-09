@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+  <title>Docker Compose設定の安全チェッカー | dev-tools-jp</title>
+  <meta name="description" content="docker-compose.ymlの危険な権限・Dockerソケット・DBポート公開・キー直書きなどを日本語で簡易チェック。入力はブラウザ内で処理し、値をマスク。送信・保存しません。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Docker Compose設定の安全チェッカー | dev-tools-jp">
+  <meta property="og:description" content="権限・ポート公開・キー直書きの見直し候補をブラウザ内で確認。入力の値はマスクし、送信・保存しません。">
+  <meta property="og:url" content="https://supportapp3-lab.github.io/dev-tools-jp/tools/compose-check/">
+  <meta property="og:locale" content="ja_JP">
+  <link rel="stylesheet" href="style.css">
+  <script src="checker.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header><a class="brand" href="../../">dev-tools-jp</a><span class="privacy"><span aria-hidden="true">●</span> ブラウザ内で処理</span></header>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">VPSでコンテナを動かす、その前に</p>
+        <h1>Docker Compose<br>設定の安全チェッカー</h1>
+        <p class="lead">強すぎる権限、DBポートの公開、キーの直書きを簡易チェック。<br>値はマスクし、送信・保存しません。</p>
+      </section>
+      <div class="workspace">
+        <section class="panel input-panel" aria-labelledby="input-heading">
+          <div class="panel-heading"><h2 id="input-heading"><span class="step">01</span> 設定を貼り付け</h2><button type="button" id="clear" class="text-button">入力を消去</button></div>
+          <label for="config">docker-compose.yml / compose.yaml の内容</label>
+          <textarea id="config" rows="17" maxlength="200001" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="input-help" placeholder="ここに設定全体を貼り付けてください"></textarea>
+          <p id="input-help" class="hint">最大20万文字。貼り付け後は値をマスクし、編集をロックします。元ファイルを直したら全体を再度貼り付けるか、「入力を消去」を押してください。</p>
+          <div class="actions"><button type="button" id="check" class="primary">設定をチェック <span aria-hidden="true">→</span></button><button type="button" id="unsafe-sample" class="secondary">危険な例</button><button type="button" id="safe-sample" class="secondary">安全な例</button></div>
+        </section>
+        <section class="panel result-panel" aria-labelledby="result-heading">
+          <div class="panel-heading"><h2 id="result-heading"><span class="step">02</span> 確認結果</h2><span id="count" class="count" hidden></span></div>
+          <p id="status" class="result-status" role="status" aria-live="polite">貼り付け後に「設定をチェック」を押してください。</p>
+          <div id="empty" class="empty-state"><span class="empty-icon" aria-hidden="true">≡</span><p>気になる設定を、ここに一覧表示します。</p><p class="hint">値の代わりに、行番号・重大度・直し方を表示します。</p></div>
+          <ol id="findings" class="findings" aria-label="Compose設定の見直し候補"></ol>
+        </section>
+      </div>
+      <section class="notes" aria-labelledby="notes-heading">
+        <h2 id="notes-heading">何を確認するか</h2>
+        <p>privileged、Dockerソケット、hostネットワーク、DB類（3306・5432・6379・27017・9200）の全インターフェース公開、強いcap_add、environmentへのパスワード・APIキー等の直書き、latestタグ、root指定、seccompの解除を確認します。</p>
+        <h2>使い方と注意点</h2>
+        <p>設定全体を貼り付けてチェックします。サンプルでも試せます。「安全な例」は対象の検出パターンを避けた例で、本番環境の安全性を保証しません。結果には元の値・サービス名・行の抜粋を出しません。</p>
+        <p>簡易的な行・インデント解析です。services以下の一般的なブロック形式、短い配列・マップ、ports/volumesの短縮・長形式を対象にします。YAMLの文法検証・アンカー/エイリアス展開・複数ファイルのマージ・変数展開・env_file/include/extends先の取得はしません。複雑なフロー形式、複数行文字列などでは見逃しや誤検出があります。未確認の書式は注意を表示し、検出ゼロでも安全とは限りません。</p>
+        <p>入力はこのタブのメモリだけで扱います。拡張機能や端末自体からの読取りを防ぐ機能ではありません。共有前は「入力を消去」を押してください。広告・アフィリエイト・解析タグ・外部ライブラリはありません。</p>
+        <p>設定の意味は<a href="https://docs.docker.com/reference/compose-file/services/" target="_blank" rel="noopener noreferrer">Docker公式のサービス設定</a>で確認できます（リンクを開くと外部ページへ移動します）。</p>
+      </section>
+    </main>
+    <footer><a href="../../">← ツール一覧へ</a><p>すべての処理はお使いのブラウザ内で完結します。</p></footer>
+  </div>
+</body>
+</html>
