@@ -52,11 +52,11 @@
 
   document.getElementById('decode').addEventListener('click', render);
   document.getElementById('danger-sample').addEventListener('click', () => {
-    input.value = api.dangerSample;
+    input.value = api.makeDangerSample();
     render();
   });
   document.getElementById('normal-sample').addEventListener('click', () => {
-    input.value = api.normalSample;
+    input.value = api.makeNormalSample();
     render();
   });
   document.getElementById('clear').addEventListener('click', () => {

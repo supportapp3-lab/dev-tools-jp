@@ -70,16 +70,27 @@ test('a token with internal whitespace is rejected', () => {
   assert.match(api.analyze(`Bearer ${token({ alg: 'RS256' }, {})}\nextra`).error, /途中に空白/);
 });
 test('danger sample uses dummy content and exercises risk checks', () => {
-  const result = api.analyze(api.dangerSample, now);
+  const result = api.analyze(api.makeDangerSample(now), now);
   assert.equal(result.ok, true);
   assert.ok(result.findings.some((item) => item.title === 'alg: none'));
   assert.ok(result.findings.some((item) => item.title === '機微情報らしき内容'));
   assert.ok(result.findings.some((item) => item.title === '期限切れ'));
+  assert.equal(result.payload.nbf, seconds + 86400);
 });
-test('normal sample has no high-severity findings', () => {
-  const result = api.analyze(api.normalSample, now);
+test('normal sample is generated relative to the current time', () => {
+  const result = api.analyze(api.makeNormalSample(now), now);
   assert.equal(result.ok, true);
-  assert.ok(!result.findings.some((item) => item.severity === 'high'));
+  assert.equal(result.payload.iat, seconds);
+  assert.equal(result.payload.exp, seconds + 3600);
+  assert.deepEqual(result.findings, []);
+});
+test('Japanese phone values match as a whole but identifiers do not', () => {
+  for (const value of ['090-1234-5678', '03-1234-5678', '+81 90 1234 5678', 'a@b.co']) {
+    assert.ok(ids({ alg: 'RS256' }, { value }).includes('機微情報らしき内容'), `${value} should be detected`);
+  }
+  for (const value of ['user_10234567', '0a1b2c3d-0123-4567-8901-234567890123', 'demo-user']) {
+    assert.ok(!ids({ alg: 'RS256' }, { sub: value }).includes('機微情報らしき内容'), `${value} should not be detected`);
+  }
 });
 test('top-level input limit is enforced', () => {
   assert.match(api.analyze('x'.repeat(api.MAX_LENGTH + 1)).error, /長すぎます/);
@@ -117,6 +128,7 @@ test('browser app uses text rendering and no network or storage APIs', () => {
 });
 test('HTML has strict CSP, local assets, and no form/tracker/remote dependency', () => {
   const html = fs.readFileSync(path.join(__dirname, 'index.html'), 'utf8');
+  assert.match(html, /object-src 'none'/);
   assert.match(html, /connect-src 'none'/);
   assert.match(html, /form-action 'none'/);
   assert.match(html, /<script src="checker\.js" defer>/);

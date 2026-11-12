@@ -10,8 +10,32 @@
     low: '低',
     info: '情報'
   };
-  const dangerSample = 'eyJhbGciOiJOb05lIiwia2lkIjoiZGVtby1rZXkifQ.eyJzdWIiOiJkZW1vIiwicGFzc3dvcmQiOiJEVU1NWV9PTkxZIiwiZXhwIjoxNzYwMDAwMDAwLCJuYmYiOjE3OTQ1MDAwMDB9.ZHVtbXktc2lnbmF0dXJl';
-  const normalSample = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJkZW1vLXVzZXIiLCJpYXQiOjE3OTQ0Mzk2MDAsImV4cCI6MTc5NDQ0MzIwMH0.ZHVtbXktc2lnbmF0dXJl';
+  const dummySignature = 'ZHVtbXktc2lnbmF0dXJl';
+
+  function sampleToken(header, payload) {
+    const encode = (value) => {
+      const bytes = new TextEncoder().encode(JSON.stringify(value));
+      let binary = '';
+      bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+      return btoa(binary).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+    };
+    return `${encode(header)}.${encode(payload)}.${dummySignature}`;
+  }
+
+  function makeNormalSample(now = Date.now()) {
+    const iat = Math.floor(now / 1000);
+    return sampleToken({ alg: 'RS256', typ: 'JWT' }, { sub: 'demo-user', iat, exp: iat + 3600 });
+  }
+
+  function makeDangerSample(now = Date.now()) {
+    const nowSeconds = Math.floor(now / 1000);
+    return sampleToken(
+      { alg: 'NoNe', kid: 'demo-key' },
+      { sub: 'demo', password: 'DUMMY_ONLY', exp: nowSeconds - 600, nbf: nowSeconds + DAY_SECONDS }
+    );
+  }
+
+  const phonePattern = /^(?:\+81(?:[-\s]?\d{1,4})|0\d{1,4})(?:[-\s]?\d{1,4}){1,2}$/;
 
   function decodeBase64Url(segment) {
     if (!segment || !/^[A-Za-z0-9_-]+$/.test(segment)) {
@@ -145,7 +169,7 @@
     let personalValue = false;
     walkPayload(payload, (key, value) => {
       if (/password|passwd|secret|api[_-]?key|token|credit(?:[_-]?card)?/i.test(key)) sensitiveKey = true;
-      if (typeof value === 'string' && (/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(value) || /(?:\+?81[-\s]?)?0\d{1,4}[-\s]?\d{1,4}[-\s]?\d{3,4}/.test(value))) personalValue = true;
+      if (typeof value === 'string' && (/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i.test(value) || phonePattern.test(value.trim()))) personalValue = true;
     });
     if (sensitiveKey || personalValue) {
       add('medium', '機微情報らしき内容', `ペイロードに${[sensitiveKey && '機微情報らしいキー', personalValue && 'メールアドレス・電話番号らしい値'].filter(Boolean).join('と')}があります。JWTは暗号化ではなく、内容は誰でもデコードできます。`);
@@ -176,7 +200,7 @@
     }
   }
 
-  const api = { MAX_LENGTH, analyze, dangerSample, normalSample, formatJst, normalizeInput, relativeTime };
+  const api = { MAX_LENGTH, analyze, makeDangerSample, makeNormalSample, formatJst, normalizeInput, relativeTime };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   if (root) root.JwtCheck = api;
 }(typeof window !== 'undefined' ? window : globalThis));
