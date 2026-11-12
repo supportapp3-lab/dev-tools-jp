@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none">
+  <title>JWTデコード＆安全チェック（ブラウザ内で完結） | dev-tools-jp</title>
+  <meta name="description" content="JWTのヘッダーとペイロードをブラウザ内でデコードし、alg none・期限・機微情報らしき内容などを日本語で確認。入力を送信・保存しません。">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="checker.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header><a class="brand" href="../../">dev-tools-jp</a><span class="privacy">入力はブラウザ内だけで処理</span></header>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">JWTを外部サイトに貼り付けないために</p>
+        <h1>JWTデコード＆安全チェック</h1>
+        <p class="lead">ヘッダーとペイロードをデコードし、よくある注意点を確認します。入力は送信も保存もしません。</p>
+      </section>
+      <section class="panel" aria-labelledby="input-heading">
+        <div class="panel-heading"><h2 id="input-heading">JWTを入力</h2><button type="button" id="clear">入力を消去</button></div>
+        <label for="jwt">JWT（Bearer付きも可）</label>
+        <textarea id="jwt" rows="5" maxlength="100000" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="eyJ... または Bearer eyJ..."></textarea>
+        <p class="hint">前後の空白・改行と <code>Bearer </code> を取り除いて処理します。実在する本番トークンをサンプルに使わないでください。</p>
+        <div class="actions"><button type="button" id="decode" class="primary">デコードして確認</button><button type="button" id="danger-sample">危ない例（ダミー）</button><button type="button" id="normal-sample">通常の例（ダミー）</button></div>
+      </section>
+      <p id="status" class="status" role="status" aria-live="polite">JWTを入力し、「デコードして確認」を押してください。</p>
+      <section class="results" aria-label="デコード結果">
+        <article class="panel"><h2>ヘッダー</h2><pre id="header"></pre></article>
+        <article class="panel"><h2>ペイロード</h2><pre id="payload"></pre></article>
+        <article class="panel"><h2>日時claim</h2><ul id="dates"></ul></article>
+        <article class="panel"><h2>署名</h2><p id="signature">内容は表示しません</p><p class="hint">署名検証はしません。この画面から外部の鍵やURLも取得しません。</p></article>
+      </section>
+      <section class="panel notes" aria-labelledby="findings-heading">
+        <h2 id="findings-heading">安全チェック</h2>
+        <div id="empty"><p>結果をここに表示します。</p></div>
+        <ul id="findings" class="findings"></ul>
+      </section>
+      <section class="notes">
+        <h2>チェック項目と注意</h2>
+        <p>alg:none、expの有無と期限、30日を超える有効期間、未来のnbf、機微情報らしいキーやメールアドレス・電話番号らしい値、HS系アルゴリズムの共有鍵、kid/jku/x5uヘッダーを確認します。</p>
+        <p>JWTは通常、署名されていても暗号化されていません。ペイロードに秘密情報を入れないでください。ここでは内容をデコードするだけで、署名の正しさ・発行元・権限・受け入れ側の実装は検証しません。結果は安全性を保証せず、簡易的なヒューリスティックです。</p>
+        <p>JWE（5パート）は対象外です。入力はこのページのメモリ内でだけ処理し、保存・送信・外部CDN・広告・解析タグは使いません。共有端末では作業後に入力を消去してください。</p>
+      </section>
+    </main>
+    <footer><a href="../../">← ツール一覧へ</a><span>ブラウザ内で処理</span></footer>
+  </div>
+</body>
+</html>
