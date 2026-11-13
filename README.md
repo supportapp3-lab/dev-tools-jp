@@ -35,3 +35,11 @@ node tools/compose-check/test.js
 node tools/agent-config-check/test.js
 node tools/sshd-check/test.js
 ```
+
+## JWTデコード＆安全チェック
+
+`/tools/jwt-check/` ではJWTのヘッダーとペイロードをブラウザ内でデコードし、署名は表示せず長さだけを示します。署名検証や発行元の確認は行いません。入力を送信・保存せず、危ない例と通常の例は架空のダミー値です。
+
+```sh
+node tools/jwt-check/test.js
+```
