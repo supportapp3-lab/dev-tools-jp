@@ -272,15 +272,17 @@ server {
     for (const server of servers) {
       const listens = listenPort(server);
       const nonServing = isNonServingServer(server);
+      const httpsRedirect = directives(server, 'return').some((item) => item.args[0] === '301' && /^https:\/\//i.test(item.args[1] || ''));
       const secure = listens.some(({ port, ssl }) => port === 443 && ssl);
       if (secure && !hasHeader(server, 'Strict-Transport-Security')) addFinding(findings, seen, 'hsts', server.line);
       const httpServer = listens.find(({ port }) => port === 80);
       if (httpServer && servers.some((other) => listenPort(other).some(({ port, ssl }) => port === 443 && ssl))) {
-        const redirects = directives(server, 'return').some((item) => item.args[0] === '301' && /^https:\/\//i.test(item.args[1] || ''));
-        if (!redirects) addFinding(findings, seen, 'redirect', httpServer.item.line);
+        if (!httpsRedirect) addFinding(findings, seen, 'redirect', httpServer.item.line);
       }
       const token = effectiveServerTokens(server);
-      if (!token || (token.args[0] || '').toLowerCase() === 'on') addFinding(findings, seen, 'serverTokens', token?.line || server.line);
+      if (!httpsRedirect && (!token || (token.args[0] || '').toLowerCase() === 'on')) {
+        addFinding(findings, seen, 'serverTokens', token?.line || server.line);
+      }
       if (!nonServing) {
         if (!hasHeader(server, 'X-Content-Type-Options')) addFinding(findings, seen, 'contentType', server.line);
         const frame = hasHeader(server, 'X-Frame-Options') || effectiveServerHeaders(server).some((item) => {

@@ -42,6 +42,16 @@ test('HTTP redirect requires a 443 TLS server and is checked only at server scop
   assert.ok(!ids('http { server { return 301 https://example.com; } server { listen 443 ssl; } }').includes('redirect'));
   assert.ok(ids('http { server { } server { listen 443 ssl; } }').includes('redirect'));
 });
+test('HTTPS 301-only servers do not receive server_tokens or response checks', () => {
+  const wrapped = 'http { server { listen 80; server_name a.com; return 301 https://$host$request_uri; } }';
+  assert.deepEqual(api.analyze(wrapped).findings, []);
+
+  const fragment = 'server {\n listen 80;\n server_name a.com;\n return 301 https://$host$request_uri;\n}';
+  assert.deepEqual(api.analyze(fragment).findings, []);
+
+  const otherReturn = 'server { listen 80; return 302 https://a.com; }';
+  assert.ok(ids(otherReturn).includes('serverTokens'));
+});
 test('non-serving redirect and forwarding/deny-only servers skip response checks', () => {
   const input = `http {
     server_tokens off;
