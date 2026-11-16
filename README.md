@@ -43,3 +43,11 @@ node tools/sshd-check/test.js
 ```sh
 node tools/jwt-check/test.js
 ```
+
+## nginx設定セキュリティチェッカー
+
+`/tools/nginx-check/` は `http` / `server` / `location` の一部ディレクティブをブラウザ内で簡易確認します。入力は送信・保存されず、結果には設定値やパスを表示しません。nginxの構文検証・実効設定の診断・`include`先の読込みは行わず、検出ゼロでも安全を保証しません。確認項目と制約はページ内に記載しています。
+
+```sh
+node tools/nginx-check/test.js
+```
