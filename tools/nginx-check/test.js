@@ -83,7 +83,8 @@ test('malformed braces and empty/non-http input do not throw and are marked inco
   }
 });
 test('unsafe and safe examples behave as documented', () => {
-  assert.ok(api.analyze(api.unsafeSample).findings.length >= 8);
+  const unsafeIds = new Set(api.analyze(api.unsafeSample).findings.map((finding) => finding.id));
+  for (const id of ['serverTokens', 'autoindex', 'oldTls', 'hsts', 'redirect', 'hidden', 'contentType', 'frame', 'bodySize', 'proxyHeaders', 'headerInheritance', 'aliasSlash', 'rootPath']) assert.ok(unsafeIds.has(id), id);
   assert.deepEqual(api.analyze(api.safeSample), { findings: [], incomplete: false, truncated: false });
 });
 test('finding output never contains config values, paths, or source snippets', () => {

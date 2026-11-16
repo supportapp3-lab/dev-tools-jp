@@ -58,6 +58,7 @@ server {
         root /;
         autoindex on;
         client_max_body_size 2g;
+        add_header X-Frame-Options DENY;
         location /files {
             alias /srv/files/;
             add_header X-Content-Type-Options nosniff;
@@ -66,7 +67,7 @@ server {
     server {
         listen 443 ssl;
         ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
-        proxy_pass http://app;
+        location /proxy/ { proxy_pass http://app; }
     }
 }`;
 
