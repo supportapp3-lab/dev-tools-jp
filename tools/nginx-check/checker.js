@@ -68,6 +68,7 @@ server {
         listen 443 ssl;
         ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
         location /proxy/ { proxy_pass http://app; }
+        location /static/ { root /var/www/site; }
     }
 }`;
 
@@ -219,6 +220,23 @@ server {
     return active;
   }
 
+  function isNonServingServer(server) {
+    // A return at server scope runs in the server rewrite phase before any
+    // location can serve a response. A server made only of proxy/deny
+    // locations also does not serve files from nginx's document root.
+    if (directives(server, 'return').length) return true;
+    const locations = blocksOf(server).filter((block) => block.name === 'location');
+    const coversAllPaths = locations.some((location) => {
+      const selector = location.args[0] || '';
+      const prefix = selector === '^~' ? location.args[1] : selector;
+      return prefix === '/' && selector !== '=';
+    });
+    return coversAllPaths && locations.every((location) => {
+      const denies = directives(location, 'deny').some((item) => (item.args[0] || '').toLowerCase() === 'all');
+      return denies || directives(location, 'proxy_pass').length > 0;
+    });
+  }
+
   function analyze(input) {
     if (typeof input !== 'string') throw new TypeError('設定を文字列で入力してください。');
     if (input.length > MAX_LENGTH) throw new RangeError('入力は20万文字以内にしてください。');
@@ -253,6 +271,7 @@ server {
 
     for (const server of servers) {
       const listens = listenPort(server);
+      const nonServing = isNonServingServer(server);
       const secure = listens.some(({ port, ssl }) => port === 443 && ssl);
       if (secure && !hasHeader(server, 'Strict-Transport-Security')) addFinding(findings, seen, 'hsts', server.line);
       const httpServer = listens.find(({ port }) => port === 80);
@@ -262,15 +281,18 @@ server {
       }
       const token = effectiveServerTokens(server);
       if (!token || (token.args[0] || '').toLowerCase() === 'on') addFinding(findings, seen, 'serverTokens', token?.line || server.line);
-      if (!hasHeader(server, 'X-Content-Type-Options')) addFinding(findings, seen, 'contentType', server.line);
-      const frame = hasHeader(server, 'X-Frame-Options') || effectiveServerHeaders(server).some((item) => {
-        if ((item.args[0] || '').toLowerCase() !== 'content-security-policy') return false;
-        return item.args.slice(1).join(' ').toLowerCase().includes('frame-ancestors');
-      });
-      if (!frame) addFinding(findings, seen, 'frame', server.line);
+      if (!nonServing) {
+        if (!hasHeader(server, 'X-Content-Type-Options')) addFinding(findings, seen, 'contentType', server.line);
+        const frame = hasHeader(server, 'X-Frame-Options') || effectiveServerHeaders(server).some((item) => {
+          if ((item.args[0] || '').toLowerCase() !== 'content-security-policy') return false;
+          return item.args.slice(1).join(' ').toLowerCase().includes('frame-ancestors');
+        });
+        if (!frame) addFinding(findings, seen, 'frame', server.line);
+      }
     }
 
     for (const server of servers) {
+      if (isNonServingServer(server)) continue;
       const hiddenLocations = blocksOf(server).filter((block) => block.name === 'location'
         && (block.args.join(' ').includes('/\\.') || block.args.join(' ').includes('/.')));
       if (!hiddenLocations.some((block) => directives(block, 'deny').some((item) => (item.args[0] || '').toLowerCase() === 'all'))) {

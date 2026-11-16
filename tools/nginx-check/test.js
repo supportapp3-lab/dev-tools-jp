@@ -42,6 +42,38 @@ test('HTTP redirect requires a 443 TLS server and is checked only at server scop
   assert.ok(!ids('http { server { return 301 https://example.com; } server { listen 443 ssl; } }').includes('redirect'));
   assert.ok(ids('http { server { } server { listen 443 ssl; } }').includes('redirect'));
 });
+test('non-serving redirect and forwarding/deny-only servers skip response checks', () => {
+  const input = `http {
+    server_tokens off;
+    server {
+      listen 80;
+      return 301 https://$host$request_uri;
+    }
+    server {
+      listen 443 ssl;
+      ssl_protocols TLSv1.2 TLSv1.3;
+      add_header Strict-Transport-Security max-age=31536000;
+      root /var/www/example;
+      location / { proxy_set_header Host $host; proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; proxy_pass http://app; }
+      location ~ /\\. { deny all; }
+    }
+  }`;
+  const result = api.analyze(input);
+  assert.ok(!result.incomplete);
+  assert.deepEqual(result.findings.map((finding) => finding.id), []);
+
+  const idsOnRedirect = ids('http { server_tokens off; server { listen 80; return 301 https://example.com; } }');
+  assert.ok(!idsOnRedirect.some((id) => ['hidden', 'contentType', 'frame'].includes(id)));
+
+  const forwardingOnly = ids('http { server_tokens off; server { listen 8080; location / { proxy_pass http://app; } location /private/ { deny all; } } }');
+  assert.ok(!forwardingOnly.some((id) => ['hidden', 'contentType', 'frame'].includes(id)));
+  const partialForwarding = ids('http { server_tokens off; server { listen 8080; location /api/ { proxy_pass http://app; } } }');
+  for (const id of ['hidden', 'contentType', 'frame']) assert.ok(partialForwarding.includes(id), id);
+});
+test('a serving server without a server-level return still reports missing response protections', () => {
+  const result = ids('http { server_tokens off; server { listen 8080; root /var/www/site; } }');
+  for (const id of ['hidden', 'contentType', 'frame']) assert.ok(result.includes(id), id);
+});
 test('hidden file location requires deny all; comments do not count', () => {
   assert.ok(!ids('http { server_tokens off; server { listen 80; location ~ /\\. { deny all; } } }').includes('hidden'));
   assert.ok(!ids('http { server_tokens off; server { listen 80; location ~ /\\. { deny all; } } }').includes('hidden'));
