@@ -37,6 +37,8 @@ button { border: 0; border-radius: 9px; padding: .65rem .9rem; font: inherit; fo
 .badge { color: var(--muted); font-size: .8rem; font-weight: 800; }.badge-high { color: var(--red); }.badge-medium { color: #9b6212; }.badge-low { color: var(--green); }
 .line-number { font-variant-numeric: tabular-nums; color: var(--muted); font-size: .85rem; }
 .recommendation { font-weight: 600; }
+.fix-example { overflow-x: auto; margin: .55rem 0 0; border-radius: 7px; padding: .7rem; background: #f3f6f4; color: #20332f; font: .82rem/1.5 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre; }
+.fix-example code { font: inherit; }
 .notes { margin-top: 1.2rem; }.notes p { color: var(--muted); }
 footer { padding-top: 1.5rem; color: var(--muted); font-size: .9rem; }
 @media (max-width: 760px) { .page { padding: .7rem .8rem 2rem; }.workspace { grid-template-columns: 1fr; }.panel { padding: .9rem; }.intro { padding-top: 1.4rem; } }

@@ -71,6 +71,26 @@ test('workflow_run with PR head checkout is flagged and pull_request self-hosted
   assert.ok(runner.findings.some((item) => item.id === 'selfHosted' && item.severity === 'medium'));
 });
 
+test('workflow_run head SHA or repository checkout is high risk, while checkout without either is not', () => {
+  const shaCheckout = '      - uses: actions/checkout@' + sha + '\n        with:\n          ref: ${{ github.event.workflow_run.head_sha }}\n';
+  const repoCheckout = '      - uses: actions/checkout@' + sha + '\n        with:\n          repository: ${{ github.event.workflow_run.head_repository.full_name }}\n';
+  const trigger = '{workflow_run: {workflows: [CI], types: [completed]}}';
+  const permissions = 'permissions: {}';
+  assert.ok(ids(workflow(trigger, permissions, shaCheckout)).includes('targetCheckout'));
+  assert.ok(ids(workflow(trigger, permissions, repoCheckout)).includes('targetCheckout'));
+  const safe = workflow(trigger, permissions, '      - uses: actions/checkout@' + sha + '\n        with:\n          persist-credentials: false\n');
+  assert.ok(!ids(safe).includes('targetCheckout'));
+});
+
+test('every high and medium finding includes a YAML remediation example', () => {
+  const idsWithExamples = ['targetCheckout', 'injection', 'noPermissions', 'writeAll', 'targetWrite', 'broadWrite', 'unpinnedMain', 'echoSecret', 'insecure', 'selfHosted', 'curlPipe'];
+  for (const id of idsWithExamples) assert.ok(api.examples[id]?.trim(), id);
+  const result = api.analyze(api.unsafeSample);
+  for (const finding of result.findings.filter((item) => ['high', 'medium'].includes(item.severity))) {
+    assert.ok(finding.yamlExample?.trim(), finding.id);
+  }
+});
+
 test('secret echo, insecure commands, and hardcoded credentials are found without reflecting values', () => {
   const secret = 'ghp_DUMMYTOKEN1234567890';
   const yaml = `on: push\npermissions: {}\njobs:\n  test:\n    runs-on: ubuntu-latest\n    env:\n      ACTIONS_ALLOW_UNSECURE_COMMANDS: true\n      TOKEN_VALUE: ${secret}\n    steps:\n      - run: echo "${'${{'} secrets.TEST_TOKEN }}"\n`;
@@ -101,7 +121,7 @@ test('results expose no source text and are bounded', () => {
 });
 
 class Element {
-  constructor() { this.value = ''; this.textContent = ''; this.children = []; this.listeners = {}; this.hidden = false; }
+  constructor(tagName = '') { this.tagName = tagName.toUpperCase(); this.value = ''; this.textContent = ''; this.children = []; this.listeners = {}; this.hidden = false; }
   addEventListener(name, fn) { this.listeners[name] = fn; }
   append(...nodes) { this.children.push(...nodes); }
   replaceChildren() { this.children = []; this.textContent = ''; }
@@ -111,10 +131,14 @@ test('browser app uses text nodes and makes no network or storage calls', () => 
   const elements = new Map();
   for (const id of ['workflow', 'findings', 'status', 'count', 'empty', 'check', 'unsafe-sample', 'safe-sample', 'clear']) elements.set(id, new Element());
   const forbidden = () => assert.fail('network or persistence API used');
-  const context = { window: { GhaCheck: api, addEventListener() {} }, document: { getElementById: (id) => elements.get(id), createElement: () => new Element() }, fetch: forbidden, XMLHttpRequest: forbidden, WebSocket: forbidden, localStorage: { setItem: forbidden }, sessionStorage: { setItem: forbidden } };
+  const context = { window: { GhaCheck: api, addEventListener() {} }, document: { getElementById: (id) => elements.get(id), createElement: (tag) => new Element(tag) }, fetch: forbidden, XMLHttpRequest: forbidden, WebSocket: forbidden, localStorage: { setItem: forbidden }, sessionStorage: { setItem: forbidden } };
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), context);
   elements.get('unsafe-sample').listeners.click();
   assert.ok(elements.get('findings').children.length > 0);
+  const examples = elements.get('findings').children.flatMap((item) => item.children.filter((child) => child.tagName === 'PRE'));
+  assert.ok(examples.length > 0);
+  assert.equal(examples[0].children[0].tagName, 'CODE');
+  assert.ok(examples.some((item) => item.children[0].textContent.includes('actions/checkout')));
   elements.get('safe-sample').listeners.click();
   assert.equal(elements.get('findings').children.filter((item) => item.className.includes('finding-high') || item.className.includes('finding-medium')).length, 0);
   elements.get('clear').listeners.click();

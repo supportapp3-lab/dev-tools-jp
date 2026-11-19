@@ -28,6 +28,11 @@
       const header = element('div', 'finding-header', '');
       header.append(element('span', 'badge', finding.severityLabel), element('span', 'line-number', finding.line + '行目'));
       item.append(header, element('h3', '', finding.title), element('p', '', finding.why), element('p', 'recommendation', finding.fix));
+      if (finding.yamlExample) {
+        const example = element('pre', 'fix-example', '');
+        example.append(element('code', '', finding.yamlExample));
+        item.append(example);
+      }
       list.append(item);
     }
   }
