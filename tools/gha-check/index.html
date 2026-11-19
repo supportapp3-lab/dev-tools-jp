@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+  <title>GitHub Actions ワークフロー安全チェッカー | dev-tools-jp</title>
+  <meta name="description" content="GitHub Actionsワークフローの危険な設定を日本語で簡易確認。YAMLはブラウザ内だけで処理し、送信・保存しません。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="GitHub Actions ワークフロー安全チェッカー | dev-tools-jp">
+  <meta property="og:description" content="pull_request_target、スクリプトインジェクション、権限やactionの固定などをブラウザ内で確認します。">
+  <meta property="og:url" content="https://supportapp3-lab.github.io/dev-tools-jp/tools/gha-check/">
+  <meta property="og:locale" content="ja_JP">
+  <link rel="icon" href="../jwt-check/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="checker.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header><a class="brand" href="../../">dev-tools-jp</a><span class="privacy"><span aria-hidden="true">●</span> ブラウザ内で処理</span></header>
+    <nav class="top-nav" aria-label="メインナビゲーション"><a href="../../">ツール一覧</a><a href="../nginx-check/">nginx設定チェッカー</a><a href="../compose-check/">Compose設定チェッカー</a></nav>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">workflowを公開する前に確認</p>
+        <h1>GitHub Actions<br>ワークフロー安全チェッカー</h1>
+        <p class="lead">YAMLの危険な書き方を日本語で確認します。<br>入力は送信・保存せず、このブラウザ内で処理します。</p>
+      </section>
+      <div class="workspace">
+        <section class="panel input-panel" aria-labelledby="input-heading">
+          <div class="panel-heading"><h2 id="input-heading"><span class="step">01</span> workflow YAMLを貼り付け</h2><button type="button" id="clear" class="text-button">入力を消去</button></div>
+          <label for="workflow">.github/workflows/*.yml の内容</label>
+          <textarea id="workflow" rows="20" maxlength="200001" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="input-help" placeholder="workflow YAMLを貼り付けてください"></textarea>
+          <p id="input-help" class="hint">最大20万文字。結果には行番号・重大度・理由・修正案だけを表示します。</p>
+          <div class="actions"><button type="button" id="check" class="primary">チェック <span aria-hidden="true">→</span></button><button type="button" id="unsafe-sample" class="secondary">危ない例</button><button type="button" id="safe-sample" class="secondary">普通の例</button></div>
+        </section>
+        <section class="panel result-panel" aria-labelledby="result-heading">
+          <div class="panel-heading"><h2 id="result-heading"><span class="step">02</span> 確認結果</h2><span id="count" class="count" hidden></span></div>
+          <p id="status" class="result-status" role="status" aria-live="polite">YAMLを貼り付けて「チェック」を押してください。</p>
+          <div id="empty" class="empty-state"><span class="empty-icon" aria-hidden="true">≡</span><p>見直し候補をここに表示します。</p><p class="hint">入力値やソース行は表示しません。</p></div>
+          <ol id="findings" class="findings" aria-label="GitHub Actionsワークフローの見直し候補"></ol>
+        </section>
+      </div>
+      <section class="notes" aria-labelledby="notes-heading">
+        <h2 id="notes-heading">確認する項目</h2>
+        <p>危険なトリガーでのPR head checkout、イベント値のrunへの直接展開、permissions、actionのSHA固定、secretのログ出力、認証情報らしい直書き、checkoutの認証情報保持、self-hosted runner、取得スクリプトの実行などを確認します。</p>
+        <h2>使い方と注意点</h2>
+        <p>workflow YAML 1ファイル分を貼り付けて確認してください。結果は入力行番号と短い修正案を示します。秘密らしい値やソース行は表示しません。危ない例はダミー値だけを使っています。</p>
+        <p>これはインデントを使う簡易YAML解析で、完全なYAML検証ではありません。アンカー・複雑なYAML書式・式の意味やworkflowの実効権限は検証しません。actionlintやzizmorの代わりではなく、検出ゼロでも安全を保証しません。</p>
+        <p>入力はタブ内のメモリだけで処理し、ネットワーク送信や保存をしません。広告、解析タグ、外部ライブラリ、フォームもありません。</p>
+      </section>
+    </main>
+    <footer><a href="../../">← ツール一覧へ</a><p>処理はお使いのブラウザ内で完結します。</p></footer>
+  </div>
+</body>
+</html>

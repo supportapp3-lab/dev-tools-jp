@@ -51,3 +51,11 @@ node tools/jwt-check/test.js
 ```sh
 node tools/nginx-check/test.js
 ```
+
+## GitHub Actionsワークフロー安全チェッカー
+
+`/tools/gha-check/` はworkflow YAMLの危険なトリガー、権限、スクリプトインジェクション、actionの固定などを簡易確認します。入力は送信・保存せず、完全なYAML検証やactionlint / zizmorの代替はしません。
+
+```sh
+node --test tools/gha-check/test.js
+```
