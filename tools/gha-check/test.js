@@ -42,6 +42,31 @@ test('run injection checks untrusted values in block scalars and ignores comment
   assert.deepEqual(ids(workflow('pull_request', 'permissions: {}', '      - run: echo ok # ${{ github.event.issue.title }}\n')), []);
 });
 
+test('run injection covers workflow_run and other externally controlled event fields while env remains safe', () => {
+  const expressions = [
+    'github.event.workflow_run.head_commit.message',
+    'github.event.workflow_run.head_commit.author.name',
+    'github.event.workflow_run.head_commit.author.email',
+    'github.event.workflow_run.head_branch',
+    'github.event.workflow_run.display_title',
+    'github.event.workflow_run.pull_requests[0].head.ref',
+    'github.event.discussion.title',
+    'github.event.discussion.body',
+    'github.event.discussion_comment.body',
+    'github.event.pages[0].page_name',
+    'github.event.pull_request.head.label',
+    'github.event.pull_request.head.repo.default_branch',
+  ];
+  for (const expression of expressions) {
+    const interpolation = '${{ ' + expression + ' }}';
+    const direct = workflow('push', 'permissions: {}', `      - run: echo "${interpolation}"\n`);
+    const directResult = api.analyze(direct);
+    assert.equal(directResult.findings.find((item) => item.id === 'injection')?.severity, 'high', expression);
+    const viaEnv = workflow('push', 'permissions: {}', `      - env:\n          VALUE: ${interpolation}\n        run: printf '%s' "$VALUE"\n`);
+    assert.ok(!ids(viaEnv).includes('injection'), expression);
+  }
+});
+
 test('multiple jobs, step mappings, quoted strings, and folded block scalars parse', () => {
   const yaml = `on: [pull_request]\npermissions: {}\njobs:\n  first:\n    runs-on: ubuntu-latest\n    steps:\n      - name: quoted # is not a comment\n        run: >\n          echo "${'${{'} github.event.issue.body }}"\n  second:\n    runs-on: [ubuntu-latest, self-hosted]\n    steps:\n      - uses: vendor/action@v1\n`;
   const result = api.analyze(yaml);
