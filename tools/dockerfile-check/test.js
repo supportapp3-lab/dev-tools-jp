@@ -106,11 +106,61 @@ test('requested permission, sudo, apt, SSH and healthcheck checks are available'
 
 test('ordinary sample has no high or medium findings; unsafe sample demonstrates checks', () => {
   const safe = analyze(api.safeSample);
+  assert.equal(safe.findings.some((item) => item.id === 'parse-error'), false);
+  assert.equal(safe.incomplete, false);
   assert.deepEqual(safe.findings.filter((item) => ['高', '中'].includes(item.severity)), []);
   const unsafe = analyze(api.unsafeSample);
   for (const id of ['final-user-root', 'secret-variable', 'hardcoded-token', 'copy-sensitive-path',
     'mutable-base-tag', 'pipe-to-shell', 'world-writable', 'install-sshd', 'expose-ssh']) assert.ok(has(api.unsafeSample, id), id);
   assert.ok(unsafe.findings.some((item) => item.id === 'copy-all-context' && item.severity === '情報'));
+});
+
+test('WORKDIR is a supported instruction in upper- and lower-case Dockerfiles', () => {
+  for (const instruction of ['WORKDIR', 'workdir']) {
+    const result = analyze(`FROM alpine:3.20\n${instruction} /app\nUSER app\nHEALTHCHECK CMD true`);
+    assert.equal(result.findings.some((item) => item.id === 'parse-error'), false);
+    assert.equal(result.incomplete, false);
+  }
+  const allInstructions = `FROM alpine:3.20 AS build
+ARG VERSION=1
+LABEL org.example.version=1
+WORKDIR /src
+ENV MODE=production
+RUN echo ok
+SHELL ["/bin/sh", "-c"]
+COPY app.js /app/
+ADD archive.tar /tmp/
+VOLUME /data
+EXPOSE 8080
+STOPSIGNAL SIGTERM
+HEALTHCHECK CMD true
+ONBUILD RUN echo child
+FROM alpine:3.20
+MAINTAINER example
+USER app
+ENTRYPOINT ["node"]
+CMD ["server.js"]`;
+  assert.equal(analyze(allInstructions).findings.some((item) => item.id === 'parse-error'), false);
+});
+
+test('every high and medium rule has a Dockerfile remediation snippet', () => {
+  const result = analyze(api.unsafeSample);
+  const findings = result.findings.filter((item) => ['高', '中'].includes(item.severity));
+  assert.ok(findings.length > 0);
+  for (const item of findings) assert.ok(item.fixSnippet?.trim(), `${item.id} is missing a fix snippet`);
+});
+
+test('masked-value marker appears only on findings that contain sensitive values', () => {
+  const result = analyze(`FROM alpine:latest
+ENV API_KEY=DUMMY_SECRET_VALUE
+RUN printf '%s' 'ghp_DUMMYTOKEN1234567890'
+COPY .env /app/.env
+USER root`);
+  for (const item of result.findings) {
+    assert.equal(Object.hasOwn(item, 'maskedValue'), ['secret-variable', 'hardcoded-token', 'copy-sensitive-path'].includes(item.id), item.id);
+  }
+  assert.ok(result.findings.filter((item) => ['secret-variable', 'hardcoded-token', 'copy-sensitive-path'].includes(item.id))
+    .every((item) => item.maskedValue === '[値は表示しません]'));
 });
 
 test('heredoc is reported as incomplete and its body is not parsed as Docker instructions', () => {
@@ -160,6 +210,10 @@ test('browser app uses textContent only and clears data on navigation without ne
   vm.runInNewContext(fs.readFileSync(path.join(__dirname, 'app.js'), 'utf8'), context);
   elements.get('unsafe-sample').listeners.click();
   assert.ok(elements.get('findings').children.length > 0);
+  const renderedSnippets = elements.get('findings').children.flatMap((item) => item.children)
+    .filter((node) => node.className === 'fix-example');
+  assert.ok(renderedSnippets.length > 0);
+  assert.ok(renderedSnippets.every((node) => node.children[0]?.className === '' && node.children[0].textContent));
   const secret = 'DUMMY_APP_SECRET_777';
   elements.get('dockerfile').value = `FROM alpine:3.20\nENV API_KEY=${secret}`;
   elements.get('check').listeners.click();

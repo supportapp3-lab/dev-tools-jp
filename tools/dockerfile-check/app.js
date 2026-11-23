@@ -29,8 +29,14 @@
       const item = element('li', 'finding finding-' + finding.severity, '');
       const header = element('div', 'finding-header', '');
       header.append(element('span', 'badge', finding.severity), element('span', 'line-number', finding.line + '行目'));
-      item.append(header, element('h3', '', finding.title), element('p', '', finding.message),
-        element('p', 'hint', finding.maskedValue), element('p', 'recommendation', finding.advice));
+      item.append(header, element('h3', '', finding.title), element('p', '', finding.message));
+      if (finding.maskedValue) item.append(element('p', 'hint', finding.maskedValue));
+      item.append(element('p', 'recommendation', finding.advice));
+      if (finding.fixSnippet) {
+        const example = element('pre', 'fix-example', '');
+        example.append(element('code', '', finding.fixSnippet));
+        item.append(element('h4', 'fix-example-title', '修正例'), example);
+      }
       list.append(item);
     }
   }

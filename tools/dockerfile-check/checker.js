@@ -4,8 +4,24 @@
   const MAX_LENGTH = 200000;
   const MAX_FINDINGS = 200;
   const INSTRUCTIONS = new Set(['ADD', 'ARG', 'CMD', 'COPY', 'ENTRYPOINT', 'ENV', 'EXPOSE', 'FROM',
-    'HEALTHCHECK', 'LABEL', 'MAINTAINER', 'ONBUILD', 'RUN', 'SHELL', 'STOPSIGNAL', 'USER', 'VOLUME']);
+    'HEALTHCHECK', 'LABEL', 'MAINTAINER', 'ONBUILD', 'RUN', 'SHELL', 'STOPSIGNAL', 'USER', 'VOLUME', 'WORKDIR']);
   const severityOrder = { '高': 0, '中': 1, '低': 2, '情報': 3 };
+  const MASKED_VALUE_FINDINGS = new Set(['secret-variable', 'hardcoded-token', 'copy-sensitive-path']);
+  const FIX_SNIPPETS = {
+    'secret-variable': `RUN --mount=type=secret,id=api_key sh -c 'use-tool --key "$(cat /run/secrets/api_key)"'`,
+    'hardcoded-token': `RUN --mount=type=secret,id=token sh -c 'use-tool --token "$(cat /run/secrets/token)"'`,
+    'copy-sensitive-path': 'COPY app.js /app/app.js\n# .dockerignore: .env, *.pem, id_rsa, .git',
+    'mutable-base-tag': 'FROM node:22.11.0',
+    'pipe-to-shell': 'COPY install.sh /tmp/install.sh\nRUN echo "<verified-sha256>  /tmp/install.sh" | sha256sum -c - && sh /tmp/install.sh',
+    'world-writable': 'RUN chmod 755 /app/start.sh',
+    sudo: 'RUN apt-get update && apt-get install -y --no-install-recommends curl',
+    'apt-recommends': 'RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*',
+    'apt-cache-cleanup': 'RUN apt-get update && apt-get install -y --no-install-recommends curl && rm -rf /var/lib/apt/lists/*',
+    'apt-upgrade': 'FROM ubuntu:24.04\nRUN apt-get update && apt-get install -y --no-install-recommends curl',
+    'install-sshd': 'USER app\nCMD ["node", "server.js"]',
+    'expose-ssh': 'EXPOSE 8080',
+    'final-user-root': 'RUN addgroup --system app && adduser --system --ingroup app app\nUSER app',
+  };
   const SECRET_NAME = /(?:^|[^A-Z0-9])(?:PASSWORD|PASSWD|SECRET|TOKEN|API[_-]?KEY|PRIVATE[_-]?KEY|CREDENTIAL)(?:$|[^A-Z0-9])/i;
   const TOKEN_PATTERNS = [
     /(?<![A-Za-z0-9])ghp_[A-Za-z0-9]{8,}/g,
@@ -16,7 +32,10 @@
   ];
 
   function finding(id, severity, line, title, message, advice) {
-    return { id, severity, line: Math.max(1, line || 1), title, message, advice, maskedValue: '[値は表示しません]' };
+    const item = { id, severity, line: Math.max(1, line || 1), title, message, advice };
+    if (MASKED_VALUE_FINDINGS.has(id)) item.maskedValue = '[値は表示しません]';
+    if (FIX_SNIPPETS[id]) item.fixSnippet = FIX_SNIPPETS[id];
+    return item;
   }
 
   function tokenize(text) {

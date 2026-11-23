@@ -44,6 +44,9 @@ button:hover { background: #edf5f0; border-color: #8aaf9c; }
 .finding h3 { font-size: 14px; margin: 5px 0 0; }
 .finding p { font-size: 12px; margin: 7px 0 0; }
 .finding .recommendation { color: #315b49; font-weight: 600; }
+.fix-example-title { font-size: 12px; margin: 9px 0 3px; }
+.fix-example { overflow-x: auto; margin: 0; padding: 10px 12px; border-radius: 6px; background: #f1f5f2; color: #213b34; font: 12px/1.6 ui-monospace, "Cascadia Code", monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+.fix-example code { display: block; padding: 0; background: transparent; overflow-wrap: anywhere; }
 .notes { margin: 35px 2px; color: #52665a; }
 .notes h2 { color: #294c3b; margin: 17px 0 12px; }
 .notes p { font-size: 13px; margin: 10px 0; }
