@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+  <title>Dockerfile 安全チェッカー（ブラウザ内で完結） | dev-tools-jp</title>
+  <meta name="description" content="Dockerfileのroot実行、秘密情報、latestタグなどの見直し候補を日本語で簡易確認。入力はブラウザ内だけで処理し、送信・保存しません。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Dockerfile 安全チェッカー | dev-tools-jp">
+  <meta property="og:description" content="Dockerfileをブラウザ内で簡易チェック。入力は送信・保存しません。">
+  <meta property="og:url" content="https://supportapp3-lab.github.io/dev-tools-jp/tools/dockerfile-check/">
+  <meta property="og:locale" content="ja_JP">
+  <link rel="stylesheet" href="style.css">
+  <script src="checker.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header><a class="brand" href="../../">dev-tools-jp</a><span class="privacy"><span aria-hidden="true">●</span> ブラウザ内で処理</span></header>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">Dockerイメージをビルドする前に</p>
+        <h1>Dockerfile<br>安全チェッカー</h1>
+        <p class="lead">よくある危険な書き方や見直し候補を確認します。<br>入力の送信・保存はしません。</p>
+      </section>
+      <div class="workspace">
+        <section class="panel input-panel" aria-labelledby="input-heading">
+          <div class="panel-heading"><h2 id="input-heading"><span class="step">01</span> Dockerfileを貼り付け</h2><button type="button" id="clear" class="text-button">入力を消去</button></div>
+          <label for="dockerfile">Dockerfile 1ファイル分</label>
+          <textarea id="dockerfile" rows="20" maxlength="200001" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="input-help" placeholder="ここにDockerfile全体を貼り付けてください"></textarea>
+          <p id="input-help" class="hint">最大20万文字。結果には行番号・重大度・理由・直し方だけを表示し、秘密らしい値は表示しません。</p>
+          <div class="actions"><button type="button" id="check" class="primary">Dockerfileをチェック <span aria-hidden="true">→</span></button><button type="button" id="unsafe-sample" class="secondary">危ない例</button><button type="button" id="safe-sample" class="secondary">普通の例</button></div>
+        </section>
+        <section class="panel result-panel" aria-labelledby="result-heading">
+          <div class="panel-heading"><h2 id="result-heading"><span class="step">02</span> 確認結果</h2><span id="count" class="count" hidden></span></div>
+          <p id="status" class="result-status" role="status" aria-live="polite">貼り付け後に「Dockerfileをチェック」を押してください。</p>
+          <div id="empty" class="empty-state"><span class="empty-icon" aria-hidden="true">≡</span><p>見直し候補をここに表示します。</p><p class="hint">値やソース行の抜粋は表示しません。</p></div>
+          <ol id="findings" class="findings" aria-label="Dockerfileの見直し候補"></ol>
+        </section>
+      </div>
+      <section class="notes" aria-labelledby="notes-heading">
+        <h2 id="notes-heading">確認する項目</h2>
+        <p>最終ステージのroot実行、ENV / ARGの秘密情報らしい値、認証トークンの直書き、秘密ファイルのCOPY / ADD、ビルドコンテキスト全体のコピー、ベースイメージのタグ、取得内容をそのままシェルへ渡す処理、広すぎる権限、sudo、aptパッケージの扱い、SSH関連、HEALTHCHECKを確認します。</p>
+        <h2>使い方と注意点</h2>
+        <p>Dockerfile全体を貼り付けてチェックします。行番号・重大度・理由・修正例を表示し、値や元の行は表示しません。危ない例・普通の例は架空の値だけを使っています。</p>
+        <p>行ベースの簡易解析です。heredoc、完全なDockerfile構文検証、ビルド時の変数・実際に取得されるイメージやファイルは検証しません。hadolintやイメージ脆弱性スキャン（Trivy等）の代わりではなく、検出ゼロでも安全を保証しません。解釈できない入力は不完全として表示します。</p>
+        <p>入力はこのタブのメモリだけで扱い、ネットワーク送信や保存をしません。広告、解析、外部ライブラリ、CDN、フォームはありません。</p>
+        <p>Dockerfileで <code>--privileged</code> 相当のコンテナ権限は指定できないため、このツールのチェック対象外です。実行時の権限とマウントは別途確認してください。</p>
+        <p>Dockerfileの構文や命令は<a href="https://docs.docker.com/reference/dockerfile/" target="_blank" rel="noopener noreferrer">Docker公式リファレンス</a>でも確認できます（リンクを開くと外部ページへ移動します）。</p>
+      </section>
+    </main>
+    <footer><a href="../../">← ツール一覧へ</a><p>すべての処理はお使いのブラウザ内で完結します。</p></footer>
+  </div>
+</body>
+</html>

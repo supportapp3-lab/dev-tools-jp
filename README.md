@@ -58,4 +58,9 @@ node tools/nginx-check/test.js
 
 ```sh
 node --test tools/gha-check/test.js
+node --test tools/dockerfile-check/test.js
 ```
+
+## Dockerfile安全チェッカー
+
+`/tools/dockerfile-check/` はDockerfileのroot実行、秘密情報らしい設定、イメージタグ、ファイルコピー、ビルドコマンドなどを行番号つきで簡易確認します。入力や値を表示・送信・保存せず、heredocや完全なDockerfile構文の検証は対象外です。hadolintやイメージ脆弱性スキャンの代わりではなく、検出ゼロでも安全を保証しません。
