@@ -64,3 +64,11 @@ node --test tools/dockerfile-check/test.js
 ## Dockerfile安全チェッカー
 
 `/tools/dockerfile-check/` はDockerfileのroot実行、秘密情報らしい設定、イメージタグ、ファイルコピー、ビルドコマンドなどを行番号つきで簡易確認します。入力や値を表示・送信・保存せず、heredocや完全なDockerfile構文の検証は対象外です。hadolintやイメージ脆弱性スキャンの代わりではなく、検出ゼロでも安全を保証しません。
+
+## HTTPセキュリティヘッダーチェッカー
+
+`/tools/headers-check/` は貼り付けたHTTPレスポンスヘッダーから、CSP・HSTS・Cookie属性・CORSなどの見直し候補をブラウザ内で表示します。値やCookieの値は表示せず、送信・保存もしません。簡易チェックのため、脆弱性診断の代わりにはなりません。
+
+```sh
+node --test tools/headers-check/test.js
+```

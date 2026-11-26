@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; form-action 'none'; base-uri 'none'; object-src 'none'">
+  <title>HTTPセキュリティヘッダー チェッカー（CSP・HSTS・Cookie／ブラウザ内で完結） | dev-tools-jp</title>
+  <meta name="description" content="貼り付けたHTTPレスポンスヘッダーからCSP・HSTS・Cookieなどの見直し候補を日本語で確認。入力はブラウザ内だけで処理し、送信・保存しません。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="HTTPセキュリティヘッダー チェッカー | dev-tools-jp">
+  <meta property="og:description" content="HTTPレスポンスヘッダーの不足や危険な設定をブラウザ内で簡易チェック。入力は送信・保存しません。">
+  <meta property="og:url" content="https://supportapp3-lab.github.io/dev-tools-jp/tools/headers-check/">
+  <meta property="og:locale" content="ja_JP">
+  <link rel="icon" href="../jwt-check/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="checker.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header><a class="brand" href="../../">dev-tools-jp</a><span class="privacy"><span aria-hidden="true">●</span> ブラウザ内で処理</span></header>
+    <nav class="top-nav" aria-label="メインナビゲーション"><a href="../../">ツール一覧</a><a href="../nginx-check/">nginx設定チェッカー</a><a href="../dockerfile-check/">Dockerfile安全チェッカー</a></nav>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">レスポンスを貼り付けて、その場で確認</p>
+        <h1>HTTPセキュリティヘッダー<br>チェッカー</h1>
+        <p class="lead">CSP・HSTS・Cookieなどの設定を簡易チェックします。<br>入力は送信・保存されず、このブラウザ内だけで処理します。</p>
+      </section>
+      <div class="workspace">
+        <section class="panel input-panel" aria-labelledby="input-heading">
+          <div class="panel-heading"><h2 id="input-heading"><span class="step">01</span> レスポンスヘッダーを貼り付け</h2><button type="button" id="clear" class="text-button">入力を消去</button></div>
+          <label for="headers">HTTPレスポンスヘッダー1件分</label>
+          <textarea id="headers" rows="18" maxlength="200001" autocomplete="off" autocapitalize="off" spellcheck="false" aria-describedby="input-help" placeholder="curl -sI の出力などを貼り付けてください"></textarea>
+          <p id="input-help" class="hint">最大20万文字。Cookieの値は結果に表示しません。解釈できない行は無視して件数だけを表示します。</p>
+          <div class="actions"><button type="button" id="check" class="primary">ヘッダーをチェック <span aria-hidden="true">→</span></button><button type="button" id="unsafe-sample" class="secondary">危ない例</button><button type="button" id="safe-sample" class="secondary">普通の例</button></div>
+        </section>
+        <section class="panel result-panel" aria-labelledby="result-heading">
+          <div class="panel-heading"><h2 id="result-heading"><span class="step">02</span> 確認結果</h2><span id="count" class="count" hidden></span></div>
+          <p id="status" class="result-status" role="status" aria-live="polite">ヘッダーを貼り付けて「ヘッダーをチェック」を押してください。</p>
+          <div id="empty" class="empty-state"><span class="empty-icon" aria-hidden="true">≡</span><p>見直し候補をここに表示します。</p><p class="hint">値そのものは結果に表示しません。</p></div>
+          <div id="cookie-summary" class="cookie-summary" hidden aria-label="Cookie値のマスク表示"></div>
+          <ol id="findings" class="findings" aria-label="HTTPセキュリティヘッダーの見直し候補"></ol>
+        </section>
+      </div>
+      <section class="notes" aria-labelledby="notes-heading">
+        <h2 id="notes-heading">確認する項目</h2>
+        <p>HSTS、CSP、クリックジャッキング対策、MIME型、Referrer-Policy、Permissions-Policy、Set-Cookie属性、CORS、Server等のバージョン表示、非推奨ヘッダーを確認します。</p>
+        <h2>使い方と注意点</h2>
+        <p><code>curl -sI https://example.com</code> で1回分を、リダイレクトを含める場合は <code>curl -sIL https://example.com</code> でヘッダーを取得して貼り付けます。HTTPステータス行はあってもなくても構いません。複数レスポンスが含まれる場合は最後のレスポンスを対象にします。</p>
+        <p>貼り付けたヘッダーだけを見る簡易チェックで、脆弱性診断やサーバー全体の検査の代わりではありません。ページごとにヘッダーが異なることがあり、検出ゼロでも安全を保証しません。サンプルはダミー値です。</p>
+        <p>入力はタブ内のメモリだけで処理し、ネットワーク送信・保存をしません。広告、解析タグ、外部ライブラリ、CDN、フォームはありません。</p>
+      </section>
+    </main>
+    <footer><a href="../../">← ツール一覧へ</a><p>処理はお使いのブラウザ内で完結します。</p></footer>
+  </div>
+</body>
+</html>
